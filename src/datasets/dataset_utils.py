@@ -3,6 +3,7 @@ from torch.utils.data import Dataset
 
 from .dataset import DatasetWrapper
 from .other.glass_plate import GlassPlate, GlassPlateTrainYolo, GlassPlateTestYolo
+from .other.glass_plate_inference import DefectOptDataset
 from .custom.defectviews import GlassOpt, GlassOptBckg, GlassOptTricky, GlassOptDouble, GlassOptDoubleInference, BubblePoint, QPlusV1, QPlusV2, QPlusDouble
 from .fsl.omniglot import OmniglotWrapper
 from .fsl.miniimagenet import MiniImagenet
@@ -11,6 +12,11 @@ from .fsl.cub import Cub
 from .torch.celeba import CelebaWrapper
 from ..utils.config_parser import DatasetConfig
 from ..utils.tools import Logger
+
+
+err_msg = "values allowed: {`opt6`, `opt_bckg`, `opt_double`, `opt_double_inference`, `binary`, `qplusv1`, " + \
+    "`qplusv2`, `qplus_double`, `omniglot`, `miniimagenet`, `opt_yolo_train`, `opt_yolo_test`, `cub`, " + \
+    "`cifar_fs`, `celeba`, `full_inference`} for dataset_type"
 
 
 class DatasetBuilder:
@@ -60,11 +66,7 @@ class DatasetBuilder:
             Logger.instance().info("Loading dataset Omniglot (type Dataset)")
             return CelebaWrapper(dataset_config)
         else:
-            raise ValueError(
-                "values allowed: {`opt6`, `opt_bckg`, `opt_double`, `opt_double_inference`, `binary`, `qplusv1`, " +
-                "`qplusv2`, `qplus_double`, `omniglot`, `miniimagenet`, `opt_yolo_train`, `opt_yolo_test`, `cub`, " +
-                "`cifar_fs`, `celeba`} for dataset_type"
-            )
+            raise ValueError(err_msg)
         
 class YoloDatasetBuilder:
 
@@ -77,7 +79,15 @@ class YoloDatasetBuilder:
             Logger.instance().info("Loading dataset GlassPlateTestYolo (type GlassPlate)")
             return GlassPlateTestYolo(dataset_config)
         else:
-            raise ValueError(
-            "values allowed: {`opt6`, `opt_bckg`, `opt_double` `binary`, `qplusv1`, `qplusv2`, " +
-            "`qplus_double` `omniglot`, `miniimagenet`, `opt_yolo_train`, `opt_yolo_test`} for dataset_type"
-        )
+            raise ValueError(err_msg)
+
+
+class InferenceBuilder:
+
+    @staticmethod
+    def load_dataset(dataset_config: DatasetConfig) -> DefectOptDataset:
+        if dataset_config.dataset_type == "full_inference":
+            Logger.instance().info("Loading dataset FullInference")
+            return DefectOptDataset(dataset_config)
+        
+        raise ValueError(err_msg)

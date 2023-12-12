@@ -78,7 +78,7 @@ class DatasetLauncher(Dataset):
 
     @staticmethod
     def compute_mean_std(dataset: Dataset, ds_type: str) -> Tuple[torch.Tensor, torch.Tensor]:
-        if "imagenet" in ds_type or "cifar" in ds_type:
+        if "imagenet" in ds_type:
             Logger.instance().debug(f"Dataset type is {ds_type}: imagenet mean/std selected")
             return torch.Tensor([0.485, 0.456, 0.406]), torch.Tensor([0.229, 0.224, 0.225])
 

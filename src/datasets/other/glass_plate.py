@@ -356,7 +356,7 @@ class GlassPlate:
             Logger.instance().warning(f"The following plates will be removed from df since not available: {missing}")
             df = df[~df[_CH.COL_IMG_NAME].isin(missing)]
 
-        return self.order_by(df, filt)
+        return df
 
     def get_defect_class(self, df: pd.DataFrame):
         return set(df[_CH.COL_CLASS_KEY].unique())

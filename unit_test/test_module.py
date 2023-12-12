@@ -9,7 +9,7 @@ project_root = os.path.abspath(os.path.dirname(os.path.dirname(current_dir)))
 sys.path.insert(0, project_root)
 
 from glass_defect_dataset.src.datasets.dataset import DatasetLauncher
-from glass_defect_dataset.src.datasets.dataset_utils import DatasetBuilder, YoloDatasetBuilder
+from glass_defect_dataset.src.datasets.dataset_utils import DatasetBuilder, YoloDatasetBuilder, InferenceBuilder
 from glass_defect_dataset.src.utils.config_parser import read_from_json, write_to_json
 from glass_defect_dataset.src.utils.tools import Logger
 
@@ -33,6 +33,9 @@ if __name__=="__main__":
         # check if YOLO
         if "yolo" in config.dataset_type:
             dataset = YoloDatasetBuilder.load_dataset(config)
+            sys.exit(0)
+        elif "full_inference" in config.dataset_type:
+            dataset = InferenceBuilder.load_dataset(config)
             sys.exit(0)
         else:
             dataset = DatasetBuilder.load_dataset(config)

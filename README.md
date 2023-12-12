@@ -8,7 +8,7 @@ Edit the `config/config.json` file to start
 
 ```
 "dataset_path": string,
-"dataset_type": {`opt6`, `opt_bckg`, `opt_double`, `opt_double_inference`, `binary`, `qplusv1`, `qplusv2`, `qplus_double`, `omniglot`, `miniimagenet`, `opt_yolo_train`, `opt_yolo_test`, `cub`, `cifar_fs`, `celeba`},
+"dataset_type": {`opt6`, `opt_bckg`, `opt_double`, `opt_double_inference`, `binary`, `qplusv1`, `qplusv2`, `qplus_double`, `omniglot`, `miniimagenet`, `opt_yolo_train`, `opt_yolo_test`, `cub`, `cifar_fs`, `celeba`, `full_inference`},
 "dataset_splits": List[float] (1 for train/test (e.g. [0.8]), 3 for train/val/test),
 "normalize": bool,
 "crop_size": int,

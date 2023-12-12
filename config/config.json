@@ -1,6 +1,6 @@
 {
-    "dataset_path": "/media/lorenzo/M/datasets/omniglot-py",
-    "dataset_type": "omniglot",
+    "dataset_path": "/media/lorenzo/M/datasets/dmx/dataset_opt",
+    "dataset_type": "full_inference",
     "dataset_splits": [
         0.7,
         0.0,
