@@ -4,7 +4,7 @@ from torch.utils.data import Dataset
 from .dataset import DatasetWrapper
 from .other.glass_plate import GlassPlate, GlassPlateTrainYolo, GlassPlateTestYolo
 from .other.glass_plate_inference import DefectOptDataset
-from .custom.defectviews import GlassOpt, GlassOptBckg, GlassOptTricky, GlassOptDouble, GlassOptDoubleInference, BubblePoint, QPlusV1, QPlusV2, QPlusDouble
+from .custom.defectviews import GlassOpt, GlassOptBckg, GlassOptTricky, GlassOptDouble, GlassOptDoubleInference, GlassOptFullInference, BubblePoint, QPlusV1, QPlusV2, QPlusDouble
 from .fsl.omniglot import OmniglotWrapper
 from .fsl.miniimagenet import MiniImagenet
 from .fsl.cifar import CifarFs
@@ -38,6 +38,9 @@ class DatasetBuilder:
         elif dataset_config.dataset_type == "opt_double_inference":
             Logger.instance().info("Loading dataset GlassOptDoubleInference (type GlassOptDouble)")
             return GlassOptDoubleInference(dataset_config)
+        elif dataset_config.dataset_type == "full_inference":
+            Logger.instance().info("Loading dataset GlassOptFullInference (type GlassOptDoubleInference)")
+            return GlassOptFullInference(dataset_config)
         elif dataset_config.dataset_type == "qplus_double":
             Logger.instance().info("Loading dataset QPlusDouble (type GlassOptDouble)")
             return QPlusDouble(dataset_config)
@@ -82,7 +85,7 @@ class YoloDatasetBuilder:
             raise ValueError(err_msg)
 
 
-class InferenceBuilder:
+class FullInferenceBuilder:
 
     @staticmethod
     def load_dataset(dataset_config: DatasetConfig) -> DefectOptDataset:

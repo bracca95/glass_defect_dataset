@@ -219,9 +219,13 @@ class DefectOptDataset:
     def __init__(self, dataset_config: DatasetConfig):
         self.csv = BoundingBoxParser(dataset_config)
         self.full_img_set = self._read_plate_file(Tools.validate_path(self.FULL_IMG_LIST))
-        self._save_exact_defect()
 
-    def _save_exact_defect(self, margin: int=5):
+        self.out_dir = os.path.join(self.csv.dataset_config.dataset_path, "tmp", "query")
+
+    def save_exact_defect(self, margin: int=5):
+        if not os.path.exists(self.out_dir):
+            os.makedirs(self.out_dir)
+
         df = self.csv.group_by_plate_ch1_ch2(self.csv._df)
 
         for plate in self.full_img_set:
@@ -247,13 +251,12 @@ class DefectOptDataset:
                 defect_1 = img_1.crop(defect_coords)
                 defect_2 = img_2.crop(defect_coords)
 
-                out_dir = os.path.join(os.getcwd(), "output")
                 defect_vid_1 = f"{defect.defect_class}_did_{defect.defect_id}_vid_1.png"
                 defect_vid_2 = f"{defect.defect_class}_did_{defect.defect_id}_vid_2.png"
 
                 try:
-                    defect_1.save(os.path.join(out_dir, defect_vid_1))
-                    defect_2.save(os.path.join(out_dir, defect_vid_2))
+                    defect_1.save(os.path.join(self.out_dir, defect_vid_1))
+                    defect_2.save(os.path.join(self.out_dir, defect_vid_2))
                 except SystemError:
                     Logger.instance().error(f"There is an error in the bounding box, check values: {defect}")
                 except AttributeError:

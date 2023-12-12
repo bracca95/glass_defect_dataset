@@ -3,7 +3,7 @@ import torch
 
 from PIL import Image
 from glob import glob
-from typing import Callable, List
+from typing import Callable, List, Optional
 from torchvision import transforms
 
 from .custom_dataset import CustomDataset
@@ -326,6 +326,45 @@ class GlassOptDoubleInference(GlassOptDouble):
     def __init__(self, dataset_config: DatasetConfig):
         super().__init__(dataset_config)
         self.test_dataset = InferenceLauncher(self.test_dataset.image_list, self.test_dataset.label_list, False, self.load_image)
+
+
+class GlassOptFullInference(GlassOptDoubleInference):
+
+    def __init__(self, dataset_config: DatasetConfig):
+        super().__init__(dataset_config)
+
+    def get_image_list(self, filt: Optional[List[str]]=None) -> List[str]:
+        image_list = glob(os.path.join(self.dataset_config.dataset_path, "*.png"))
+        image_list = list(filter(lambda x: x.endswith("vid_1.png"), image_list))
+        
+        if not all(map(lambda x: x.endswith(".png"), image_list)) or image_list == []:
+            raise ValueError("incorrect image list. Check the provided path for your dataset.")
+        
+        Logger.instance().info("Got image list")
+
+        return image_list
+    
+    def get_label_list(self) -> List[int]:
+        """Get all the label names, for each image name
+
+        Returns:
+            List[str] with the name of the labels
+        """
+        
+        if len(self.image_list) == 0:
+            self.get_image_list(self.filt)
+
+        label_list = list(map(lambda x: self.split_name(x), self.image_list))
+       
+        Logger.instance().debug(f"Labels used: {set(label_list)}")
+        Logger.instance().debug(f"Number of images per class: { {i: label_list.count(i) for i in set(label_list)} }")
+
+        labels = set(label_list)
+        if any(map(lambda x: x not in labels, self.label_to_idx.keys())):
+            self.label_to_idx = { k: v for v, k in enumerate(labels) }
+            self.idx_to_label = Tools.invert_dict(self.label_to_idx)
+
+        return [self.label_to_idx[defect] for defect in label_list]
 
 class QPlusDouble(GlassOptDouble):
 
