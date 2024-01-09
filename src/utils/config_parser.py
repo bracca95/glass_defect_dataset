@@ -65,6 +65,8 @@ class DatasetConfig:
     augment_offline: Optional[List[str]] = None
     dataset_mean: Optional[List[float]] = None
     dataset_std: Optional[List[float]] = None
+    csv_path: Optional[str] = None
+    support_path: Optional[str] = None
 
     @classmethod
     def deserialize(cls, obj: Any) -> DatasetConfig:
@@ -87,6 +89,8 @@ class DatasetConfig:
             augment_offline = from_union([lambda x: from_list(from_str, x), from_none], obj.get(_CD.CONFIG_AUGMENT_OFFLINE))
             dataset_mean = from_union([lambda x: from_list(from_float, x), from_none], obj.get(_CD.CONFIG_DATASET_MEAN))
             dataset_std = from_union([lambda x: from_list(from_float, x), from_none], obj.get(_CD.CONFIG_DATASET_STD))
+            csv_path = from_union([from_str, from_none], obj.get(_CD.CONFIG_CSV_PATH))
+            support_path = from_union([from_str, from_none], obj.get(_CD.CONFIG_SUPPORT_PATH))
         except TypeError as te:
             Logger.instance().critical(te.args)
             sys.exit(-1)
@@ -107,14 +111,33 @@ class DatasetConfig:
                 pass
             else:
                 raise ValueError("the sum for dataset_splits must be 1")
+            
+        if csv_path is not None:
+            try:
+                csv_path = Tools.validate_path(csv_path)
+            except FileNotFoundError as fnf:
+                Logger.instance().critical(f"{fnf.args}\nA csv file path has been specified but not found.")
+
+        if support_path is not None:
+            try:
+                support_path = Tools.validate_path(support_path)
+            except FileNotFoundError as fnf:
+                Logger.instance().critical(f"{fnf.args}\nA csv file path has been specified but not found.")
+
+        if not any(map(lambda x: x.endswith(".png"), os.listdir(support_path))):
+            raise FileNotFoundError(f"The support set directory {support_path} exists but no images are contained")
         
         Logger.instance().info(f"DatasetConfig deserialized: " +
             f"dataset_path: {dataset_path}, dataset_type: {dataset_type}, dataset_splits: {dataset_splits}, " +
             f"normalize: {normalize}, augment_online: {augment_online}, augment_offline: {augment_offline}, " +
-            f"dataset mean: {dataset_mean}, dataset_std: {dataset_std}, crop_size: {crop_size}, image_size: {image_size}"
+            f"dataset mean: {dataset_mean}, dataset_std: {dataset_std}, crop_size: {crop_size}, " +
+            f"image_size: {image_size}, csv_path: {csv_path}, support_path: {support_path}"
         )
         
-        return DatasetConfig(dataset_path, dataset_type, dataset_splits, normalize, crop_size, image_size, augment_online, augment_offline, dataset_mean, dataset_std)
+        return DatasetConfig(
+            dataset_path, dataset_type, dataset_splits, normalize, crop_size, image_size, augment_online, 
+            augment_offline, dataset_mean, dataset_std, csv_path, support_path
+        )
 
     def serialize(self) -> dict:
         result: dict = {}
@@ -130,6 +153,8 @@ class DatasetConfig:
         result[_CD.CONFIG_AUGMENT_OFFLINE] = from_union([lambda x: from_list(from_str, x), from_none], self.augment_offline)
         result[_CD.CONFIG_DATASET_MEAN] = from_union([lambda x: from_list(from_float, x), from_none], self.dataset_mean)
         result[_CD.CONFIG_DATASET_STD] = from_union([lambda x: from_list(from_float, x), from_none], self.dataset_std)
+        result[_CD.CONFIG_CSV_PATH] = from_union([from_str, from_none], self.csv_path)
+        result[_CD.CONFIG_SUPPORT_PATH] = from_union([from_str, from_none], self.support_path)
 
         Logger.instance().info(f"DatasetConfig serialized: {result}")
         return result

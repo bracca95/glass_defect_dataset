@@ -12,5 +12,7 @@
     "augment_online": null,
     "augment_offline": null,
     "dataset_mean": null,
-    "dataset_std": null
+    "dataset_std": null,
+    "csv_path": null,
+    "support_path": null
 }

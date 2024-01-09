@@ -16,7 +16,9 @@ Edit the `config/config.json` file to start
 "augment_online": Optional[List[str]] (classes for online augmentation),
 "augment_offline": Optional[List[str]] (classes for offline augmentation),
 "dataset_mean": Optional[List[float]] (Grayscale/RGB),
-"dataset_std": Optional[List[float]] (Grayscale/RGB)
+"dataset_std": Optional[List[float]] (Grayscale/RGB),
+"csv_path": Optional[str],
+"support_path": Optional[str]
 ```
 
 If `dataset_mean` and `dataset_std` are set to null, the program will compute them and then it will quit the execution.

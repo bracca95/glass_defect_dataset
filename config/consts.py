@@ -28,6 +28,8 @@ class DatasetConst:
     CONFIG_IMAGE_SIZE = "image_size"
     CONFIG_DATASET_MEAN = "dataset_mean"
     CONFIG_DATASET_STD = "dataset_std"
+    CONFIG_CSV_PATH = "csv_path"
+    CONFIG_SUPPORT_PATH = "support_path"
 
 class BboxFileHeader:
     COL_PIECE_ID = "#id_piece"

@@ -26,19 +26,21 @@ class Bbox:
 
 class BoundingBoxParser:
 
-    CSV_RELATIVE = "2.4_dataset_opt/all/bounding_boxes.csv"
     TMP_COLUMN = "plate_group"
 
     def __init__(self, dataset_config: DatasetConfig):
         self.dataset_config = dataset_config
+
+        # the bounding box file must be specified
+        if dataset_config.csv_path is None:
+            raise ValueError(f"You need to specify a csv file")
         
         # get names of each channel, grouping by plate
         self.all_dataset_images = glob(os.path.join(self.dataset_config.dataset_path, "202*", "*.png"))
         self.plate_name_set = set(map(lambda x: x.rsplit("_", 1)[0], self.all_dataset_images))
 
         # read csv by filtering classes and returning
-        csv_relative_path = self.CSV_RELATIVE
-        self._dataset_csv = os.path.join(self.dataset_config.dataset_path, csv_relative_path)
+        self._dataset_csv = dataset_config.csv_path
         self._df = self._parse_csv(self.all_dataset_images, filt=None)
 
     def _parse_csv(self, available_images: List[str], filt: Optional[List[str]]=None) -> pd.DataFrame:
@@ -214,13 +216,18 @@ class SinglePlate:
 
 class DefectOptDataset:
 
-    FULL_IMG_LIST = "test_plates.txt"
+    FULL_IMG_LIST = "big_img_list.txt"
 
     def __init__(self, dataset_config: DatasetConfig):
         self.csv = BoundingBoxParser(dataset_config)
-        self.full_img_set = self._read_plate_file(Tools.validate_path(self.FULL_IMG_LIST))
-
-        self.out_dir = os.path.join(self.csv.dataset_config.dataset_path, "tmp", "query")
+        full_or_selected: Optional[str] = None
+        try:
+            full_or_selected = Tools.validate_path(self.FULL_IMG_LIST)
+        except FileNotFoundError as fnf:
+            Logger.instance().warning(f"{fnf}\nUsing all the plates!!")
+        
+        self.full_img_set = self._read_plate_file(full_or_selected)
+        self.out_dir = os.path.join(os.path.dirname(dataset_config.support_path), "query")
 
     def save_exact_defect(self, margin: int=5):
         if not os.path.exists(self.out_dir):
@@ -231,8 +238,15 @@ class DefectOptDataset:
         for plate in self.full_img_set:
             plate.defects = plate.locate_on_plate(df, list(self.csv._df.columns), filt=None)
             
-            img_1 = Image.open(plate.ch_1).convert("L")
-            img_2 = Image.open(plate.ch_2).convert("L")
+            try:
+                img_1 = Image.open(plate.ch_1).convert("L")
+                img_2 = Image.open(plate.ch_2).convert("L")
+            except Exception as e:
+                Logger.instance().error(
+                    f"An error occurred while opening image {plate.ch_1} or {plate.ch_2}."
+                    f"Please find additional info below:\n{e.args}"
+                )
+                continue
 
             for defect in plate.defects:
                 if margin == 0:
@@ -263,28 +277,37 @@ class DefectOptDataset:
                     Logger.instance().error(f"There is an error in the bounding box, check values: {defect}")
     
     def _read_plate_file(self, path_to_txt: Optional[str]) -> set[SinglePlate]:
-        msg = f"Using all plates: the path {path_to_txt} does not exist. Create a `$PROJ/test_plates.txt` file"
+        # both avoid problems, if one of the plates is missing (ch1/ch2) the image is discarded entirely
+        msg = f"Using all plates: the path {path_to_txt} does not exist. Create a `$PROJ/big_img_list.txt` file"
 
         # return all the plates if no txt file is specified
         if path_to_txt is None:
             Logger.instance().warning(f"Using all plates in test.")
-            return set([SinglePlate(f"{name}_1.png", f"{name}_2.png") for name in self.csv.plate_name_set])
+            return set(
+                [SinglePlate(f"{name}_1.png", f"{name}_2.png") for name in self.csv.plate_name_set \
+                 if os.path.exists(f"{name}_1.png") and os.path.exists(f"{name}_2.png")]
+            )
         
-        # return all the plates if no txt file is specified
+        # return all the plates if no txt file is wrong
         try:
             path_to_txt = Tools.validate_path(path_to_txt)
         except ValueError as ve:
             Logger.instance().warning(f"{ve.args}\n{msg}")
-            return set([SinglePlate(f"{name}_1.png", f"{name}_2.png") for name in self.csv.plate_name_set])
+            return set([SinglePlate(f"{name}_1.png", f"{name}_2.png") for name in self.csv.plate_name_set \
+                    if os.path.exists(f"{name}_1.png") and os.path.exists(f"{name}_2.png")])
         except FileNotFoundError as fnf:
             Logger.instance().warning(f"{fnf.args}\n{msg}")
-            return set([SinglePlate(f"{name}_1.png", f"{name}_2.png") for name in self.csv.plate_name_set])
+            return set([SinglePlate(f"{name}_1.png", f"{name}_2.png") for name in self.csv.plate_name_set \
+                    if os.path.exists(f"{name}_1.png") and os.path.exists(f"{name}_2.png")])
         
         with open(path_to_txt, "r") as f:
             lines = [p.strip().replace("_1.png", "").replace("_2.png", "").replace(",", "").replace(";", "") for p in f]
 
         filter_plate_names = set(lines) & self.csv.plate_name_set
-        plates = set([SinglePlate(f"{name}_1.png", f"{name}_2.png") for name in filter_plate_names])
+        plates = set(
+            [SinglePlate(f"{name}_1.png", f"{name}_2.png") for name in filter_plate_names \
+             if os.path.exists(f"{name}_1.png") and os.path.exists(f"{name}_2.png")]
+        )
         
         Logger.instance().warning(f"Filtering plates: {filter_plate_names}")
         return plates

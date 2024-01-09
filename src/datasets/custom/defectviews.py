@@ -360,7 +360,7 @@ class GlassOptFullInference(GlassOptDoubleInference):
         Logger.instance().debug(f"Number of images per class: { {i: label_list.count(i) for i in set(label_list)} }")
 
         labels = set(label_list)
-        if any(map(lambda x: x not in labels, self.label_to_idx.keys())):
+        if any(map(lambda x: x not in self.label_to_idx.keys(), labels)):
             self.label_to_idx = { k: v for v, k in enumerate(labels) }
             self.idx_to_label = Tools.invert_dict(self.label_to_idx)
 
